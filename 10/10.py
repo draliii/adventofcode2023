@@ -2,7 +2,8 @@ import numpy as np
 
 def read_data():
     f = open("10-full.in", "r")
-    # f = open("10.in", "r")
+    #f = open("10.in", "r")
+    #f = open("10-pt2.in", "r")
     data = f.read().split("\n")
 
     pipe_height = len(data)
@@ -17,7 +18,7 @@ def read_data():
     "J": np.array([[0, 1, 0], [1, -1, 0], [0, 0, 0]]),
     "7": np.array([[0, 0, 0], [1, -1, 0], [0, 1, 0]]),
     "F": np.array([[0, 0, 0], [0, -1, 1], [0, 1, 0]]),
-    "S": np.array([[0, 0, 0], [0, -1, 0], [0, 0, 0]]),
+    "S": np.array([[0, 0, 0], [0, 10, 0], [0, 0, 0]]),
     ".": np.array([[0, 0, 0], [0, -1, 0], [0, 0, 0]])}
 
     startr = 0
@@ -43,6 +44,32 @@ def read_data():
         pipes[startr, startc+1] = 1
 
     return pipes, startr, startc
+
+def flood_fill(data, start, value):
+    # rucne, protoze se mi nechce instalovat scikit-image
+    
+    queue = [start]
+    while True:
+        if len(queue) == 0:
+            return
+
+        x, y = queue.pop(0)
+        old_value = data[x, y]
+        if old_value == value:
+            continue
+
+        data[x, y] = value
+
+        for xdif, ydif in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
+            X = x + xdif
+            Y = y + ydif
+            if X < 0 or Y < 0 or X >= data.shape[0] or Y >= data.shape[1]:
+                continue
+            if data[X, Y] == old_value:
+                queue.append((X, Y))
+
+
+
 
 
 def do_step(data, r, c, x, y):
@@ -70,7 +97,7 @@ def do_step(data, r, c, x, y):
 def solve(data, startr, startc):
     r = startr
     c = startc
-    data[r, c] = 0
+    # data[r, c] = 0
     max_distance = 0
     while True:
         moved = False
@@ -85,8 +112,31 @@ def solve(data, startr, startc):
                 break
         if not moved:
             break
-    print(int((max_distance+ 10)/20))
+    print(int((max_distance)/20))
     k = 3
+
+    # replace all ones (unused tiles) with zeros (ground)
+    data = np.where(data == 1, 0, data)
+
+    k=3
+
+    # flood the outside with -1s, replacing all zeros with -1
+    flood_fill(data, (0, 0), -1)
+    print(k)
+
+    k=3
+
+    # flood the outside with 0s, replacing all the outside with zeros
+    flood_fill(data, (0, 0), 0)
+    print(k)
+
+    k=3
+
+    # replace all remaining -1s (on the inside) with ones and delete all other data
+    data = np.where(data == -1, 1, 0)
+
+    # sum all ones, this is the number of enclosed tiles
+    print(np.sum(data))
 
 
 if __name__ == '__main__':
