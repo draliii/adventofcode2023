@@ -42,7 +42,6 @@ def solve_line(CACHE, condition, str_idx, numbers, idx):
             cache_put(CACHE, str_idx, idx, 1)
             return 1
         else:
-
             cache_put(CACHE, str_idx, idx, 0)
             return 0
 
@@ -58,8 +57,6 @@ def solve_line(CACHE, condition, str_idx, numbers, idx):
         return solution
 
     # kdyz to neni ani . ani #, tak to musi byt ?, vyzkousim obe varianty
-    if str_idx == 6 and condition == "?###????????":
-        k = 3
     v1 = solve_line(CACHE, condition, str_idx+1, numbers, idx)
     v2 = solve_line_start_here(CACHE, condition, str_idx, numbers, idx)
     solution = v1 + v2
@@ -134,5 +131,4 @@ def solve(data):
 
 if __name__ == '__main__':
     data = read_data()
-    #solve_line("???", 0, [2, 1], 0)
     print(solve(data))

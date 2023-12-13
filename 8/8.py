@@ -1,3 +1,5 @@
+from math import lcm
+
 def read_data():
     f = open("8-full.in", "r")
     # f = open("8.in", "r")
@@ -16,8 +18,6 @@ def read_data():
         if nodes[0].endswith("A"):
             starts.append(nodes[0])
 
-
-
     return instructions, graph, starts
 
 
@@ -33,6 +33,7 @@ def walk(graph, step, instuctions):
 def convert_instructions(line):
     # r = 82
     # l = 76
+    # prevadi L a R na cisla 0 a 1 s vyuzitim jejich ascii hodnot
     return list(map(lambda x: int((int(x)-76)/6), line))
 
 
@@ -43,11 +44,13 @@ def getinstruction(inp="str"):
         i += 1
         if i == l:
             i = 0
-        yield (inp[i])
+        yield i, inp[i]
+
 
 
 def solve(graph, instructions, step):
-    for i, g in enumerate(getinstruction(instructions)):
+    for i, gg in enumerate(getinstruction(instructions)):
+        j, g = gg
         print(step)
         # is this the last step?
         #if "ZZZ" in step:
@@ -68,23 +71,38 @@ def solve(graph, instructions, step):
         step = next_step
 
 
+def solve_v2(graph, instructions, starts):
+    periods = []
+    for s in starts:
+        offset, period = get_period(graph, instructions, s)
+        print(offset, period)
+        periods.append(period)
+
+    print(lcm(*periods))
+
+
 def get_period(graph, instructions, step):
-    ends = []
-    end_indices = []
+    ends = {}
 
-    for i, g in enumerate(getinstruction(instructions)):
+    for step_counter, gg in enumerate(getinstruction(instructions)):
+        instruction_counter, instruction = gg
+
         if step.endswith("Z"):
-            ends.append(step)
-            end_indices.append(i)
 
+            if step not in ends:
+                ends[step] = {}
 
+            if instruction_counter in ends[step]:
+                previous_hit = ends[step][instruction_counter]
+                return step_counter, step_counter - previous_hit
+            else:
+                ends[step][instruction_counter] = step_counter
 
-        step = graph[step][g]
-
-
-
+        step = graph[step][instruction]
 
 
 if __name__ == '__main__':
     instructions, graph, starts = read_data()
-    print(solve(graph, instructions, starts))
+    solve_v2(graph, instructions, starts)
+
+    # print(solve(graph, instructions, starts))
