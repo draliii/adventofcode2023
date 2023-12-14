@@ -47,7 +47,7 @@ def read_data():
 
 def flood_fill(data, start, value):
     # rucne, protoze se mi nechce instalovat scikit-image
-    
+
     queue = [start]
     while True:
         if len(queue) == 0:
