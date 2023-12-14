@@ -37,36 +37,6 @@ def solve(data):
     return weights
 
 
-def full_tilt(data, tiltx, tilty):
-    fromi = 0
-    toi = len(data)
-    fromj = 0
-    toj = len(data[0])
-
-    if tiltx == -1:
-        fromi = 1
-    if tiltx == 1:
-        toi = toi-1
-    if tilty == -1:
-        fromj = 1
-    if tilty == 1:
-        toj = toj-1
-
-    while True:
-        moved = False
-        for i in range(fromi, toi):
-            for j in range(fromj, toj):
-                if data[i][j] == "O":
-                    if data[i+tiltx][j+tilty] == ".":
-                        # posun kamen nahoru
-                        data[i+tiltx][j+tilty] = "O"
-                        data[i][j] = "."
-                        moved = True
-        if not moved:
-            break
-    return
-
-
 def full_tilt_N(data, stones):
     for i in range(0, len(data)):
         for j in range(0, len(data[0])):
@@ -120,15 +90,12 @@ def full_tilt_E(data, stones):
 def new_array(rows, cols):
     array = []
     for i in range(rows):
-        a = []
-        for j in range(cols):
-            a.append(0)
+        a = [0] * cols
         array.append(a)
     return array
 
 
 def get_min_stones(data):
-
     stonesN = new_array(len(data), len(data[0]))
     for cid in range(len(data[0])):
         last_stone = -1
@@ -164,28 +131,17 @@ def get_min_stones(data):
     return stonesN, stonesW, stonesS, stonesE
 
 
-
 def print_arr(arr):
     for l in arr:
         print(l)
     print()
+
 
 def str_arr(arr):
     r = ""
     for l in arr:
         r+=''.join(l)
     return r
-
-
-
-def is_same(a1, a2):
-    for i in range(len(a1)):
-        for j in range(len(a1[0])):
-            if a1[i][j] == a2[i][j]:
-                continue
-            else:
-                return False
-    return True
 
 
 def solve_pt2(data, stonesN, stonesW, stonesS, stonesE):
