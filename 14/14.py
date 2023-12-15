@@ -5,7 +5,7 @@ import hashlib
 def read_data():
     pt1 = False
     f = open("14-full.in", "r")
-    # f = open("14.in", "r")
+    f = open("14.in", "r")
     data = f.read().split("\n")
     data = list(map(list, data))
 
