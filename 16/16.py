@@ -27,9 +27,8 @@ def get_direction(direction):
     return ray_rowstep, ray_colstep
 
 
-
-def solve(data, rays_trace):
-    rays = [(0, -1, "right")]
+def solve(data, rays_trace, start):
+    rays = [start]
 
     while True:
         if len(rays) == 0:
@@ -102,21 +101,55 @@ def solve(data, rays_trace):
                 nd = "right"
             rays.append([nr, nc, nd])
 
-
     energized = new_array(len(data), len(data[0]))
     energized_sum = 0
     for r in range(len(data)):
         for c in range(len(data[0])):
-            s = ray_traces["down"][r][c] + ray_traces["up"][r][c] + ray_traces["left"][r][c] + ray_traces["right"][r][c]
+            s = rays_trace["down"][r][c] + rays_trace["up"][r][c] + rays_trace["left"][r][c] + rays_trace["right"][r][c]
             if s > 0:
                 energized[r][c] = 1
                 energized_sum += 1
 
-    k = 3
     return energized_sum
 
 
+def get_new_rays_trace(data):
+    rays_trace = {}
+    for direction in ["left", "right", "up", "down"]:
+        rays_trace[direction] = new_array(len(data), len(data[0]))
+    return rays_trace
 
+
+def solve_pt2(data):
+    best = 0
+
+    for i in range(0, len(data)):
+        rays_trace = get_new_rays_trace(data)
+        result = solve(data, rays_trace, [i, 0, "right"])
+        if result > best:
+            print(i, "right", result)
+            best = result
+
+        rays_trace = get_new_rays_trace(data)
+        result = solve(data, rays_trace, [i, len(data[0])-1, "left"])
+        if result > best:
+            print(i, "left", result)
+            best = result
+
+    for j in range(0, len(data[1])):
+        rays_trace = get_new_rays_trace(data)
+        result = solve(data, rays_trace, [0, j, "down"])
+        if result > best:
+            print(j, "down", result)
+            best = result
+
+        rays_trace = get_new_rays_trace(data)
+        result = solve(data, rays_trace, [len(data)-1, j, "up"])
+        if result > best:
+            print(j, "up", result)
+            best = result
+
+    return best
 
 
 
@@ -131,9 +164,8 @@ def new_array(rows, cols):
 if __name__ == '__main__':
     data = read_data()
 
-    ray_traces = {}
-    for direction in ["left", "right", "up", "down"]:
-        ray_traces[direction] = new_array(len(data), len(data[0]))
+    ray_traces = get_new_rays_trace(data)
 
-    print(solve(data, ray_traces))
-    #print(solve_v2(data))
+    print(solve(data, ray_traces, (0, -1, "right")))
+
+    print(solve_pt2(data))
