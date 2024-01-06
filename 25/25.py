@@ -3,6 +3,9 @@ def read_data():
     f = open("25-full.in", "r")
     f = open("25.in", "r")
     data = f.read().split("\n")
+    for d in data:
+        start, ends = d.split(":")
+
     return data
 
 

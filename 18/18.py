@@ -6,7 +6,7 @@ from PIL import Image
 
 def read_data():
     pt1 = False
-    f = open("18-full.in", "r")
+    # f = open("18-full.in", "r")
     f = open("18.in", "r")
 
     counters = {"R": 0, "L": 0, "U": 0, "D": 0}
@@ -76,10 +76,10 @@ def solve(instructions, counters):
         "R": (0, 1),
     }
 
-    field = np.zeros((col_count+1, row_count+1), dtype=np.uint8)
+    field = np.zeros((col_count + 1, row_count + 1), dtype=np.uint8)
 
-    x = counters["U"]-1
-    y = counters["L"]-1
+    x = counters["U"] - 1
+    y = counters["L"] - 1
     for i, instruction in enumerate(instructions):
         direction, distance, color = instruction
         xdif, ydif = offsets[direction]
@@ -88,12 +88,12 @@ def solve(instructions, counters):
         newx = x + xdif
         newy = y + ydif
 
-        a = min(x,newx)
-        b = max(x,newx)
-        c = min(y,newy)
-        d = max(y,newy)
+        a = min(x, newx)
+        b = max(x, newx)
+        c = min(y, newy)
+        d = max(y, newy)
 
-        field[a:b+1, c:d+1] = 255
+        field[a:b + 1, c:d + 1] = 255
         x += xdif
         y += ydif
 
@@ -115,13 +115,30 @@ def solve(instructions, counters):
     im = Image.fromarray(np.uint8(field), "RGB")
     im.save("foo.png")
 
-    print(np.sum(data)/255)
+    print(np.sum(data) / 255)
 
     pass
 
 
-def solve_pt2(instructions, counters):
+def get_offsets(prev_direction, cur_direction, inside_right):
+    corner = min(prev_direction, cur_direction) + max(prev_direction, cur_direction)
+    if inside_right:
+        if corner == "RU":
+            return 0, 0
+        elif corner == "DR":
+            return 0, 1
+        elif corner == "DL":
+            return 1, 1
+        elif corner == "LU":
+            return 1, 0
+        else:
+            print(corner)
+            raise ValueError
+    else:
+        raise ValueError
 
+
+def parse_instructions_v2(instructions, counters):
     offsets = {
         "U": (-1, 0),
         "D": (1, 0),
@@ -129,189 +146,84 @@ def solve_pt2(instructions, counters):
         "R": (0, 1),
     }
 
+    instructions.append(instructions[0])
+
     cornersx = {}
-    cornersy = {}
+    downs = {}
+
+    inside_right = True
 
     x, y = 0, 0
+    prev_direction = "U"
+    prev_corner = (0, 0)
+
     for i, instruction in enumerate(instructions):
         direction, distance, color = instruction
+
         xdif, ydif = offsets[direction]
-        xdif = xdif * (distance)
-        ydif = ydif * (distance)
+        xdif = xdif * distance
+        ydif = ydif * distance
+
         newx = x + xdif
         newy = y + ydif
 
-        a = min(x, newx)
-        b = max(x, newx)
-        c = min(y, newy)
-        d = max(y, newy)
-        append_in_dict(cornersx, a, (a, c, b, d, distance))
+        corner_offsets = get_offsets(prev_direction, direction, inside_right)
+        corner_x = x + corner_offsets[0]
+        corner_y = y + corner_offsets[1]
 
-        x = newx
-        y = newy
+        append_in_dict(cornersx, corner_x, (corner_x, corner_y))
+        if prev_direction == "U":
+            downs[(corner_x, corner_y)] = prev_corner[0]
+        elif prev_direction == "D":
+            downs[prev_corner] = corner_x
 
-    min_corners_x = list(cornersx.keys())
-    min_corners_x.sort()
-    score = 0
-
-    for i in range(len(min_corners_x)-1):
-        corner_x = min_corners_x[i]
-        neighbors = cornersx[corner_x]
-
-        this_round_width = 0
-        this_round_height = min_corners_x[i+1] - min_corners_x[i+1]
-        for n in neighbors:
-            x, y, newx, newy, distance = n
-
-            if newx < corner_x:
-                continue
-
-            if x == corner_x:
-                if x == newx:  # tohle je posun do strany, ne nahoru/dolu
-                    this_round_width += distance + 1
-
-                else:  # je to posun nahoru/dolu
-                    if x <= corner_x + this_round_height:  # je to trasa nade mnou, kterou uz muzu zahodit
-                        cornersx[min_corners_x[i+1]].remove(n)
-                    else:
-                        append_in_dict(cornersx, newx, (newx))
-
-
-        for n in neighbors:
-            x, y, newx, newy, distance = n
-
-        if this_round_height == corner_x + this_round_height:
-            pass
-        k = 3
-
-        print(this_round_width)
-        score += this_round_height * this_round_width
-
-
-
-    pass
-
-
-def parse_instructions(instructions, counters):
-    offsets = {
-        "U": (-1, 0),
-        "D": (1, 0),
-        "L": (0, -1),
-        "R": (0, 1),
-    }
-
-    cornersx = {}
-    cornersy = {}
-
-    x, y = 0, 0
-    for i, instruction in enumerate(instructions):
-        direction, distance, color = instruction
-        xdif, ydif = offsets[direction]
-        xdif = xdif * (distance)
-        ydif = ydif * (distance)
-        newx = x + xdif
-        newy = y + ydif
-
-        a = min(x, newx)
-        b = max(x, newx)
-        c = min(y, newy)
-        d = max(y, newy)
-        append_in_dict(cornersx, a, (a, c, b, d, distance))
-
+        prev_corner = (corner_x, corner_y)
+        prev_direction = direction
         x = newx
         y = newy
 
     min_corners_x = list(cornersx.keys())
     min_corners_x.sort()
 
-    corners_x_down = {
-        0: [(0, 2), (7, 5)],
-        2: [(2, 5)],
-        5: [(0, 7), (4, 7)],
-        7: [(1, 9), (7, 9)]
-    }
-    # klic je x
-    # v poli jsou pak dvojice (y, cilove x)
-
-    corners_x_right = {
-        0: [(0, 6)],
-        2: [(0, 2)],
-        5: [(0, 2), (4, 6)],
-        7: [(0, 1), (4, 6)],
-        9: [(1, 6)]
-    }
-    # klic je x
-    # v poli jsou dvojice (y, cilove y)
-
-    return min_corners_x, corners_x_down, corners_x_right
+    return cornersx, downs
 
 
-def solve_pt2_v2(minxs, corners_x_down, corners_x_right):
-    x_cuts = [0, 3, 5, 6, 7, 8, 10]
-    y_cuts_in_interval = {
-        0: [0, 7],
-        3: [2, 7],
-        5: [0, 7],
-        6: [0, 3, 3, 5],
-        7: [0, 7],
-        8: [1, 7]
-    }
-
-    x_cuts = [0]
-    y_cuts_in_interval = {}
-
-    for x in list(corners_x_right.keys())[1:]:
-        x_cuts.append(x)
-        x_cuts.append(x+1)
-
-
-    # klic je x
-    # v poli jsou pak dvojice (y, cilove x)
-    corners_x_down = {
-        0: [(0, 2), (6, 5)],
-        2: [(2, 5), (6, 5)],
-        5: [(0, 7), (4, 7)],
-        7: [(1, 9), (6, 9)]
-    }
-
-    for i in range(len(x_cuts)):
-        x_cut = x_cuts[i]
-
-        if x_cut not in corners_x_down.keys():
-            y_cuts = y_cuts_in_interval[x_cuts[i-1]]
-            append_in_dict(y_cuts_in_interval, x_cuts[i], y_cuts)
-            continue
-
-        downs = list(map(lambda a: a[0], corners_x_down[x_cut]))
-        for cxr in corners_x_right[x_cut]:
-            downs.append(cxr[0])
-            downs.append(cxr[1])
-        downs = remove_pairs(downs)
-
-
-        from_ys = downs[::2]
-        to_ys = downs[1::2]
-        for from_y, to_y in zip(from_ys, to_ys):
-            append_in_dict(y_cuts_in_interval, x_cuts[i], from_y)
-            append_in_dict(y_cuts_in_interval, x_cuts[i], to_y+1)
-        pass
-
-    print(x_cuts)
-
-
-
+def solve_pt2_v3(corners_x, downs):
+    x_cuts = list(corners_x.keys())
+    x_cuts.sort()
     result = 0
-    for xi in range(len(x_cuts)-1):
-        x = x_cuts[xi]
-        height = x_cuts[xi+1] - x
+
+    for i in range(len(x_cuts)-1):
+        x_cut = x_cuts[i]
+        next_cut = x_cuts[i+1]
+
+        # add new corners for ranges that go too low
+        for corner in corners_x[x_cut]:
+            if corner not in downs:
+                continue
+            if downs[corner] != next_cut:
+                target_x = downs[corner]
+                new_corner_x = next_cut
+                new_corner_y = corner[1]
+                new_corner = (new_corner_x, new_corner_y)
+                downs[new_corner] = target_x
+                append_in_dict(corners_x, new_corner_x, new_corner)
+
         width = 0
+        corners_ys = []
 
-        from_ys = y_cuts_in_interval[x][::2]
-        to_ys = y_cuts_in_interval[x][1::2]
-        for from_y, to_y in zip(from_ys, to_ys):
-            width += to_y - from_y
+        for corner in corners_x[x_cut]:
+            if corner in downs:
+                corners_ys.append(corner[1])
 
-        result += height*width
+        corners_ys = list(set(corners_ys))
+        corners_ys.sort()
+
+        for i in range(0, len(corners_ys), 2):
+            dif = corners_ys[i+1] - corners_ys[i]
+            width += dif
+
+        result += width * (next_cut-x_cut)
     return result
 
 
@@ -323,5 +235,5 @@ def append_in_dict(dictionary, index, data):
 
 if __name__ == '__main__':
     instructions, counters = read_data_pt2()
-    print(solve(instructions, counters))
-    # print(solve_pt2_v2(*parse_instructions(instructions, counters)))
+    # print(solve(instructions, counters))
+    print(solve_pt2_v3(*parse_instructions_v2(instructions, counters)))
