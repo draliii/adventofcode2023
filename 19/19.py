@@ -1,10 +1,12 @@
+import copy
+import itertools
 import json
 
 
 def read_data():
     pt1 = False
     f = open("19-full.in", "r")
-    f = open("19.in", "r")
+    # f = open("19.in", "r")
     data = f.read().split("\n")
 
     workflows = {}
@@ -78,6 +80,7 @@ def append_in_dict(dictionary, index, data):
     if index not in dictionary.keys():
         dictionary[index] = []
     dictionary[index].append(data)
+
 
 def solve(workflows, queues, parts):
     queues = {"in": parts, "R": [], "A": []}
@@ -168,7 +171,7 @@ def transform_worflows(workflows):
     return new_wf, parents
 
 
-def apply_condition_to_ranges(condition, r, inverted=False):
+def apply_condition_to_ranges(condition, all_ranges, inverted=False):
     mapping = {"x": 0, "m":1, "a":2, "s":3}
     m = mapping[condition[0]]
     operator = condition[1]
@@ -177,37 +180,44 @@ def apply_condition_to_ranges(condition, r, inverted=False):
     if inverted:
         if operator == ">":
             operator = "<"
+            value = value
         else:
             operator = ">"
+            value = value
+    else:
+        if operator == ">":
+            value += 1
+        else:
+            value -= 1
 
-    ranges = r[m]
-    new_ranges = [[], [], [], []]
-    for i in range(0, 4):
-        if i != m:
-            new_ranges[i] = r[i]
-    new_range = []
-    for w in ranges:
+    n_ranges = len(all_ranges)
+    new_ranges = copy.deepcopy(all_ranges)
 
-        if w is None:
+    for i in range(n_ranges):
+        r = all_ranges[i]
+        ranges = r[m]
+
+        if len(ranges) == 0:
             continue
 
-        if operator == ">":
-            if value > w[1]:
-                continue
-            if value > w[0]:
-                new_range.append([value, w[1]])
-                continue
-            new_range.append(w)
-        else:
-            if value < w[0]:
-                continue
-            if value < w[1]:
-                new_range.append([w[0], value])
-                continue
-            new_range.append(w)
-    new_ranges[m] = new_range
+        new_range = []
+        for w in ranges:
+            if operator == ">":
+                if value > w[1]:
+                    continue
+                if value > w[0]:
+                    new_range.append([value, w[1]])
+                    continue
+                new_range.append(w)
+            else:
+                if value < w[0]:
+                    continue
+                if value < w[1]:
+                    new_range.append([w[0], value])
+                    continue
+                new_range.append(w)
+        new_ranges[i][m] = new_range
     return new_ranges
-
 
 
 def add_range_to_list(ranges, r):
@@ -215,31 +225,19 @@ def add_range_to_list(ranges, r):
         return ranges
     return ranges + [r]
 
-    for i in range(len(ranges)):
-        if r[1] < ranges[i]:
-            return ranges[:i] + [r] + ranges[i:]
-
-        for w in ranges:
-            if r[1] < w[0]:
-                # todo
-                pass
-
-        if a[0] < a[1] < b[0] < b[1]:
-            return [a, b]
-
 
 def merge_ranges(r1, r2):
     new_range = []
-    for i in range(4):
-        new_range.append(r1[i] + r2[i])
+    for r in itertools.chain(r1, r2):
+        if r == [[], [], [], []]:
+            continue
+        new_range.append(r)
     return new_range
-
 
 
 def solve_pt2(workflows, queues, parts):
     tree, parents = transform_worflows(workflows)
-
-    tails = {"A": [[[0, 4000]], [[0, 4000]], [[0, 4000]], [[0, 4000]]], "R": [[], [], [], []]}
+    tails = {"A": [[[[1, 4000]], [[1, 4000]], [[1, 4000]], [[1, 4000]]]], "R": [[[], [], [], []]]}
     queue = ["A", "R"]
 
     while True:
@@ -261,8 +259,11 @@ def solve_pt2(workflows, queues, parts):
                 come_back_to_this_parent = True
                 continue
 
-            left_child = tails[left_child_name]
-            right_child = tails[right_child_name]
+            if parent == "qqz":
+                k = 3
+
+            left_child = copy.deepcopy(tails[left_child_name])
+            right_child = copy.deepcopy(tails[right_child_name])
 
             new_ranges_left = apply_condition_to_ranges(condition, left_child)
             new_ranges_right = apply_condition_to_ranges(condition, right_child, inverted=True)
@@ -274,7 +275,47 @@ def solve_pt2(workflows, queues, parts):
         if come_back_to_this_parent:
             queue.append(node_name)
 
-    print(tails["in"])
+    # rfg = count_possibilities(tails["rfg"])
+    # rfg_ = 135234560000000
+    # rn = count_possibilities(tails["crn"])
+    # crn_ = 85632000000000
+    # lnx = count_possibilities(tails["lnx"])
+    # lnx_ = 256000000000000
+    # pv = count_possibilities(tails["pv"])
+    # pv_ = 109824000000000
+    in_ = count_possibilities(tails["in"])
+    in__ = 167409079868000
+    # print(rfg, rfg_)
+    # print(crn, crn_)
+    # print(lnx, lnx_)
+    # print(pv, pv_)
+    print(in_, in__)
+    return
+
+
+def count_possibilities(all_ranges):
+    result = 0
+    for r in all_ranges:
+        value = 1
+        for attribute_list in r:
+            k = count_possibilities_attribute(attribute_list)
+            value = value * k
+        # print(value)
+        result += value
+
+    # print("---")
+    # print(result)
+    return result
+
+
+def count_possibilities_attribute(ranges):
+    if len(ranges) == 0:
+        return 0
+    result = 0
+    for fr, to in ranges:
+        dif = to - fr + 1
+        result += dif
+    return result
 
 
 if __name__ == '__main__':
