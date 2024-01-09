@@ -1,7 +1,7 @@
 def read_data():
     pt1 = False
-    f = open("21-full.in", "r")
-    # f = open("21.in", "r")
+    f = open("20-full.in", "r")
+    # f = open("20.in", "r")
     data = f.read().split("\n")
     return data
 
